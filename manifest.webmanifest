@@ -1,0 +1,9 @@
+{
+  "name": "Class 9 Syllabus Tracker",
+  "short_name": "Syllabus Tracker",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f4f6fb",
+  "theme_color": "#172554",
+  "description": "CBSE Class 9 Mathematics, Science and Social Science progress tracker"
+}

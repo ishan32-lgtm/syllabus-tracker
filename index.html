@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#172554">
+<title>Class 9 Syllabus Tracker</title>
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+:root{color-scheme:light;--ink:#172033;--muted:#667085;--line:#e5e7eb;--bg:#f4f6fb;--card:#fff;--blue:#2446a6;--green:#15803d}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px system-ui,-apple-system,Segoe UI,sans-serif}
+header{background:#172554;color:white;padding:24px 18px 28px;border-radius:0 0 24px 24px}
+header h1{font-size:24px;margin:0 0 5px}header p{margin:0;color:#dbeafe;font-size:13px}
+main{max-width:760px;margin:auto;padding:16px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:-8px}
+.stat,.panel,.chapter{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:13px}
+.stat strong{display:block;font-size:23px}.stat span,.small{font-size:12px;color:var(--muted)}
+.progress{height:9px;background:#e8ebf2;border-radius:20px;overflow:hidden;margin:14px 0 18px}.bar{height:100%;background:var(--green);width:0;transition:width .2s}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}
+.tab{border:1px solid var(--line);border-radius:12px;background:white;padding:11px 5px;font-weight:650;color:var(--ink)}
+.tab.active{background:#e8edff;border:2px solid var(--blue);color:var(--blue)}
+h2{font-size:19px;margin:16px 0 4px}.subject-progress{margin:8px 0 15px}
+.chapter{margin:9px 0;padding:12px}.chapter label{display:flex;gap:10px;align-items:flex-start;line-height:1.4;font-weight:600}
+input[type=checkbox]{width:19px;height:19px;accent-color:var(--green);flex:none;margin:1px 0 0}
+.revise{margin:9px 0 0 29px;font-size:13px;color:var(--muted);display:flex;align-items:center;gap:8px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}
+button.action{border:1px solid var(--line);border-radius:11px;background:white;padding:10px 13px;font-weight:600}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:15px}
+@media(min-width:600px){header{padding-left:max(22px,calc((100% - 720px)/2));}main{padding-top:20px}}
+</style>
+</head>
+<body>
+<header><h1>My Syllabus Tracker</h1><p>CBSE · Class 9 · 2026–27</p></header>
+<main>
+<section class="stats">
+ <div class="stat"><strong id="percent">0%</strong><span>Overall done</span></div>
+ <div class="stat"><strong id="done">0/27</strong><span>Chapters done</span></div>
+ <div class="stat"><strong id="revised">0</strong><span>Revised</span></div>
+</section>
+<div class="progress"><div class="bar" id="overallbar"></div></div>
+<div class="small">Select a subject, then tick chapters as you complete and revise them. Your progress is saved on this device.</div>
+<nav class="tabs" id="tabs"></nav>
+<section class="panel">
+ <h2 id="subject-title">Mathematics</h2>
+ <div class="subject-progress small" id="subject-count"></div>
+ <div class="progress"><div class="bar" id="subjectbar"></div></div>
+ <div id="chapters"></div>
+</section>
+<div class="actions">
+ <button class="action" id="install" hidden>＋ Install app</button>
+ <button class="action" id="export">Export progress</button>
+ <button class="action" id="reset">Reset progress</button>
+</div>
+<footer>Works offline after first load when installed. Progress stays in this browser on this device.</footer>
+</main>
+<script>
+const subjects = [
+ {name:"Mathematics",chapters:[
+ "The Mathematics of Maybe: Introduction to Probability",
+ "Predicting What Comes Next: Exploring Sequences and Progressions",
+ "Propositions and their Converses",
+ "How Quantities Combine: Understanding Data",
+ "The World of Algorithms","Quadrilaterals","Two Variables, One Line",
+ "Math of Space: Surface Area and Volume"]},
+ {name:"Science",chapters:[
+ "Exploring the World of Secondary Science","Cell: The Building Block of Life",
+ "Tissues in Action","Describing Motion Around Us",
+ "Exploring Mixtures and their Separation","How Forces Affect Motion",
+ "Work, Energy, and Simple Machines","Journey Inside the Atom",
+ "Atomic Foundations of Matter","Sound Waves: Characteristics and Applications",
+ "Reproduction: How Life Continues","Patterns in Life: Diversity and Classification",
+ "Earth as a System: Energy, Matter, and Life"]},
+ {name:"Social Science",chapters:[
+ "Oceans and Life","Life on Earth","Resistance and Resilience (1000–1700 CE)",
+ "Governance and Public Policy","Managing Your Personal Finances","From Ideas to Startups"]}
+];
+const total=subjects.reduce((n,s)=>n+s.chapters.length,0);
+let state=JSON.parse(localStorage.getItem("class9tracker")||'{"done":{},"revised":{}}');
+let current=0;
+const key=(s,i)=>s+"-"+i;
+function save(){localStorage.setItem("class9tracker",JSON.stringify(state));render();}
+function counts(s){return s.chapters.reduce((n,c,i)=>n+(state.done[key(s.name,i)]?1:0),0);}
+function render(){
+ const done=subjects.reduce((n,s)=>n+counts(s),0);
+ const revised=Object.values(state.revised).filter(Boolean).length;
+ document.getElementById("percent").textContent=Math.round(done/total*100)+"%";
+ document.getElementById("done").textContent=done+"/"+total;
+ document.getElementById("revised").textContent=revised;
+ document.getElementById("overallbar").style.width=(done/total*100)+"%";
+ document.getElementById("tabs").innerHTML=subjects.map((s,i)=>`<button class="tab ${i===current?'active':''}" data-i="${i}">${s.name}<br><span class="small">${counts(s)}/${s.chapters.length}</span></button>`).join("");
+ document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{current=+b.dataset.i;render();});
+ const s=subjects[current],n=counts(s);
+ document.getElementById("subject-title").textContent=s.name;
+ document.getElementById("subject-count").textContent=`${n} of ${s.chapters.length} chapters completed`;
+ document.getElementById("subjectbar").style.width=(n/s.chapters.length*100)+"%";
+ document.getElementById("chapters").innerHTML=s.chapters.map((c,i)=>`
+ <div class="chapter">
+  <label><input type="checkbox" data-kind="done" data-i="${i}" ${state.done[key(s.name,i)]?'checked':''}><span>Chapter ${s.name==="Mathematics"?i+7:i+1}: ${c}</span></label>
+  <label class="revise"><input type="checkbox" data-kind="revised" data-i="${i}" ${state.revised[key(s.name,i)]?'checked':''}> Revision completed</label>
+ </div>`).join("");
+ document.querySelectorAll("#chapters input").forEach(input=>input.onchange=()=>{
+  const k=key(s.name,+input.dataset.i);state[input.dataset.kind][k]=input.checked;save();
+ });
+}
+document.getElementById("reset").onclick=()=>{if(confirm("Reset all chapter and revision progress?")){state={done:{},revised:{}};save();}};
+document.getElementById("export").onclick=()=>{
+ const blob=new Blob([JSON.stringify({subjects,state},null,2)],{type:"application/json"});
+ const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="class9-syllabus-progress.json";a.click();URL.revokeObjectURL(a.href);
+};
+let installPrompt;
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installPrompt=e;document.getElementById("install").hidden=false;});
+document.getElementById("install").onclick=async()=>{if(installPrompt){installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;document.getElementById("install").hidden=true;}};
+if("serviceWorker" in navigator && location.protocol.startsWith("http"))navigator.serviceWorker.register("./sw.js");
+render();
+</script>
+</body></html>
